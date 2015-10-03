@@ -4,7 +4,7 @@ window.mic = mic
 /* Example:
  * var microphone
  *
- * mic(function(m) {
+ * mic(function(err, m) {
  *  microphone = m
  *  m.record()
  * // Wait a few seconds
@@ -36,13 +36,14 @@ function mic(cb, config) {
     // Audio setup
     var context = new AudioContext()
 
-    // Permission
-    navigator.getUserMedia({audio: true}, onUserMediaSuccess, onUserMediaFailure)
+    // Configure Mic
+    Mic.prototype.record = record
+    Mic.prototype.stop = stop
+    Mic.prototype.play = play
+    Mic.prototype.pause = pause
+    Mic.prototype.exportWAV = exportWAV
+    Mic.prototype.download = download
 
-    function onUserMediaSuccess(stream) { cb(new Mic(stream)) }
-    function onUserMediaFailure() { cb(errors.Permission) }
-
-    // Mic
     function Mic(stream) {
         this.input = context.createMediaStreamSource(stream)
         this.recorder = new Recorder(this.input, config)
@@ -51,8 +52,19 @@ function mic(cb, config) {
         this.recording = false
     }
 
+    // Permission
+    navigator.getUserMedia({audio: true}, onUserMediaSuccess, onUserMediaFailure)
+
+    function onUserMediaSuccess(stream) {
+        cb(null, new Mic(stream))
+    }
+
+    function onUserMediaFailure() {
+        cb(errors.PERMISSION)
+    }
+
     // Recording functions
-    Mic.prototype.record = function record() {
+    function record() {
         if (this.recording) this.recorder.stop()
         this.recorder.clear()
         this.recorder.record()
@@ -62,7 +74,7 @@ function mic(cb, config) {
         this.tracking = -1
     }
 
-    Mic.prototype.stop = function stop() {
+    function stop() {
         this.recorder.stop()
         this.recording = false
 
@@ -77,7 +89,7 @@ function mic(cb, config) {
     }
 
     // Playback functions
-    Mic.prototype.play = function play(when) {
+    function play(when) {
         if (this.tracking < 0) throw new Error('No buffer to play')
 
         var source = this.source = context.createBufferSource()
@@ -96,7 +108,7 @@ function mic(cb, config) {
         source.startTime = context.currentTime
     }
 
-    Mic.prototype.pause = function pause() {
+    function pause() {
         var source = this.source
         if (!source) return
 
@@ -109,11 +121,11 @@ function mic(cb, config) {
     }
 
     // Download functions
-    Mic.prototype.exportWAV = function exportWAV(cb, type) {
+    function exportWAV(cb, type) {
         this.recorder.exportWAV(cb, type)
     }
 
-    Mic.prototype.download = function download(filename) {
+    function download(filename) {
         this.recorder.exportWAV(function(blob) {
             Recorder.forceDownload(blob, filename)
         })
