@@ -1,6 +1,20 @@
 !!function(window) {
 window.mic = mic
 
+/* Example:
+ * var microphone
+ *
+ * mic(function(m) {
+ *  microphone = m
+ *  m.record()
+ * // Wait a few seconds
+ *  m.stop()
+ *  m.play()
+ *  m.exportWAV(function(blob) {
+ *      $.post('/db', blob)
+ *  })
+ */
+
 function mic(cb, config) {
     errors = {
         COMPATIBILITY: new Error('[mic] Compatibility Error: requires getUserMedia and AudioContext'),
